@@ -93,6 +93,9 @@ class GridWidget extends StatelessWidget {
         return _buildEqualCell(cell, size);
 
       case CellType.result:
+        if (cell.isEditableNumber) {
+          return _buildNumberCell(context, cell, size);
+        }
         return _buildResultCell(cell, size);
 
       case CellType.number:

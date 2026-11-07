@@ -18,7 +18,7 @@ class EquationModel {
     required this.targetResult,
   });
 
-  /// Checks if all number cells in this equation are currently filled
+  /// Checks if all number cells and the result cell in this equation are currently filled
   bool isComplete(List<List<CellModel>> grid) {
     for (final coord in numberCoords) {
       final cell = grid[coord.$1][coord.$2];
@@ -26,10 +26,14 @@ class EquationModel {
         return false;
       }
     }
+    final resCell = grid[resultCoord.$1][resultCoord.$2];
+    if (resCell.displayValue == null) {
+      return false;
+    }
     return true;
   }
 
-  /// Evaluates current values against targetResult using order of operations
+  /// Evaluates current values against result cell value
   bool isSatisfied(List<List<CellModel>> grid) {
     final numbers = <int>[];
     for (final coord in numberCoords) {
@@ -39,12 +43,16 @@ class EquationModel {
       numbers.add(val);
     }
 
+    final resCell = grid[resultCoord.$1][resultCoord.$2];
+    final resVal = resCell.displayValue;
+    if (resVal == null) return false;
+
     final evaluated = MathEvaluator.evaluate(
       numbers: numbers,
       operators: operators,
     );
 
-    return evaluated == targetResult;
+    return evaluated == resVal;
   }
 
   /// Returns current evaluated value if all cells filled, or null

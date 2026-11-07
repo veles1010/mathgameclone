@@ -44,13 +44,13 @@ class CellModel {
   }) : equationIds = equationIds ?? [];
 
   /// Helper to check if this cell is an editable player slot
-  bool get isEditableNumber => type == CellType.number && !isFixed;
+  bool get isEditableNumber => (type == CellType.number || type == CellType.result) && !isFixed;
 
   /// Helper to get the currently displayed number (fixed or user filled)
-  int? get displayValue => isFixed ? solutionValue : userValue;
+  int? get displayValue => isFixed ? (solutionValue ?? resultValue) : userValue;
 
   /// Whether player has correctly solved this cell
-  bool get isCorrect => isFixed || (userValue != null && userValue == solutionValue);
+  bool get isCorrect => isFixed || (userValue != null && userValue == (solutionValue ?? resultValue));
 
   CellModel copyWith({
     int? userValue,

@@ -23,7 +23,7 @@ class GameAction {
 
 class GameController extends ChangeNotifier {
   // Theme state
-  ThemeType _currentThemeType = ThemeType.cyberpunk;
+  ThemeType _currentThemeType = ThemeType.classicCrossmath;
   late CrossmathThemeData _theme;
 
   // Puzzle & Game state
@@ -31,6 +31,7 @@ class GameController extends ChangeNotifier {
   PuzzleDifficulty _difficulty = PuzzleDifficulty.easy;
   int _currentLevel = 1;
   bool _isDaily = false;
+  DateTime? _currentDailyDate;
 
   (int, int)? _selectedCell;
   final List<GameAction> _undoHistory = [];
@@ -93,6 +94,33 @@ class GameController extends ChangeNotifier {
     return _prefs.getInt('highest_level_${diff.name}') ?? 1;
   }
 
+  DateTime? get currentDailyDate => _currentDailyDate;
+
+  bool isDailyCompleted(DateTime date) {
+    final key = '${date.year}_${date.month}_${date.day}';
+    return _prefs.getBool('daily_completed_$key') ?? false;
+  }
+
+  void markDailyCompleted(DateTime date) {
+    final key = '${date.year}_${date.month}_${date.day}';
+    _prefs.setBool('daily_completed_$key', true);
+  }
+
+  int getDailyStreak() {
+    int streak = 0;
+    DateTime check = DateTime.now();
+    // If today is completed, start from today, else start from yesterday
+    if (!isDailyCompleted(check)) {
+      check = check.subtract(const Duration(days: 1));
+    }
+    while (isDailyCompleted(check)) {
+      streak++;
+      check = check.subtract(const Duration(days: 1));
+      if (streak > 365) break;
+    }
+    return streak;
+  }
+
   GameController() {
     _theme = CrossmathThemeData.getTheme(_currentThemeType);
   }
@@ -100,8 +128,8 @@ class GameController extends ChangeNotifier {
   Future<void> initialize() async {
     _prefs = await SharedPreferences.getInstance();
 
-    // Load saved theme
-    final savedThemeIndex = _prefs.getInt('theme_type') ?? ThemeType.cyberpunk.index;
+    // Load saved theme (default to classicCrossmath)
+    final savedThemeIndex = _prefs.getInt('theme_type') ?? ThemeType.classicCrossmath.index;
     if (savedThemeIndex >= 0 && savedThemeIndex < ThemeType.values.length) {
       _currentThemeType = ThemeType.values[savedThemeIndex];
       _theme = CrossmathThemeData.getTheme(_currentThemeType);
@@ -132,10 +160,12 @@ class GameController extends ChangeNotifier {
     required PuzzleDifficulty difficulty,
     int? level,
     bool isDaily = false,
+    DateTime? dailyDate,
   }) {
     _timer?.cancel();
     _difficulty = difficulty;
     _isDaily = isDaily;
+    _currentDailyDate = isDaily ? (dailyDate ?? DateTime.now()) : null;
     _currentLevel = level ?? (_prefs.getInt('level_${difficulty.name}') ?? 1);
     _isWon = false;
     _isGameOver = false;
@@ -152,7 +182,7 @@ class GameController extends ChangeNotifier {
     _prefs.setInt('stats_games_played', played);
 
     if (isDaily) {
-      _puzzle = PuzzleGenerator.getDailyPuzzle(DateTime.now());
+      _puzzle = PuzzleGenerator.getDailyPuzzle(_currentDailyDate!);
     } else {
       _puzzle = PuzzleGenerator.getPuzzle(
         difficulty: _difficulty,
@@ -302,6 +332,14 @@ class GameController extends ChangeNotifier {
       GameAction(row: r, col: c, previousValue: oldValue, newValue: null),
     );
 
+    // Re-check errors on affected equations
+    for (final eqId in cell.equationIds) {
+      final eq = _puzzle.equations.firstWhere((e) => e.id == eqId);
+      for (final coord in [...eq.numberCoords, eq.resultCoord]) {
+        _checkAndClearCellError(coord.$1, coord.$2);
+      }
+    }
+
     HapticFeedback.mediumImpact();
     notifyListeners();
   }
@@ -321,8 +359,15 @@ class GameController extends ChangeNotifier {
     }
 
     cell.userValue = lastAction.previousValue;
-    cell.isError = false;
     selectCell(lastAction.row, lastAction.col);
+
+    // Re-check errors on affected equations
+    for (final eqId in cell.equationIds) {
+      final eq = _puzzle.equations.firstWhere((e) => e.id == eqId);
+      for (final coord in [...eq.numberCoords, eq.resultCoord]) {
+        _checkAndClearCellError(coord.$1, coord.$2);
+      }
+    }
 
     HapticFeedback.selectionClick();
     notifyListeners();
@@ -381,9 +426,27 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void _checkAndClearCellError(int r, int c) {
+    final target = _puzzle.grid[r][c];
+    if (!target.isEditableNumber || target.userValue == null) {
+      target.isError = false;
+      return;
+    }
+    bool stillError = false;
+    for (final eqId in target.equationIds) {
+      final eq = _puzzle.equations.firstWhere((e) => e.id == eqId);
+      if (eq.isComplete(_puzzle.grid) && !eq.isSatisfied(_puzzle.grid)) {
+        stillError = true;
+        break;
+      }
+    }
+    target.isError = stillError;
+  }
+
   void _validateAffectedEquations(CellModel cell) {
     for (final eqId in cell.equationIds) {
       final eq = _puzzle.equations.firstWhere((e) => e.id == eqId);
+      final allCoords = [...eq.numberCoords, eq.resultCoord];
       if (eq.isComplete(_puzzle.grid)) {
         if (!eq.isSatisfied(_puzzle.grid)) {
           // Equation is filled completely but evaluates wrong!
@@ -396,7 +459,13 @@ class GameController extends ChangeNotifier {
             }
           }
         } else {
-          cell.isError = false;
+          for (final coord in allCoords) {
+            _checkAndClearCellError(coord.$1, coord.$2);
+          }
+        }
+      } else {
+        for (final coord in allCoords) {
+          _checkAndClearCellError(coord.$1, coord.$2);
         }
       }
     }

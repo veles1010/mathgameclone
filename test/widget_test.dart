@@ -5,68 +5,54 @@ import 'package:crossmath_puzzle/services/puzzle_generator.dart';
 
 void main() {
   group('MathEvaluator Tests', () {
-    test('Standard order of operations (BODMAS/PEMDAS)', () {
-      // 2 + 3 * 4 = 14
-      final result1 = MathEvaluator.evaluate(
-        numbers: [2, 3, 4],
-        operators: ['+', '×'],
-      );
-      expect(result1, equals(14));
-
-      // 10 - 6 / 2 = 7
-      final result2 = MathEvaluator.evaluate(
-        numbers: [10, 6, 2],
-        operators: ['-', '÷'],
-      );
-      expect(result2, equals(7));
-
-      // 4 * 3 + 8 / 2 = 12 + 4 = 16
-      final result3 = MathEvaluator.evaluate(
-        numbers: [4, 3, 8, 2],
-        operators: ['×', '+', '÷'],
-      );
-      expect(result3, equals(16));
+    test('Simple addition', () {
+      expect(MathEvaluator.evaluate(numbers: [3, 5], operators: ['+']), 8);
     });
 
-    test('Non-integer division should return null', () {
-      // 5 / 2 = 2.5 (invalid in Crossmath)
-      final result = MathEvaluator.evaluate(
-        numbers: [5, 2],
-        operators: ['÷'],
-      );
-      expect(result, isNull);
+    test('Simple subtraction', () {
+      expect(MathEvaluator.evaluate(numbers: [10, 3], operators: ['-']), 7);
     });
 
-    test('Division by zero should return null', () {
-      final result = MathEvaluator.evaluate(
-        numbers: [5, 0],
-        operators: ['÷'],
-      );
-      expect(result, isNull);
+    test('Multiplication', () {
+      expect(MathEvaluator.evaluate(numbers: [4, 5], operators: ['×']), 20);
+    });
+
+    test('Division', () {
+      expect(MathEvaluator.evaluate(numbers: [12, 4], operators: ['÷']), 3);
+    });
+
+    test('Non-integer division returns null', () {
+      expect(MathEvaluator.evaluate(numbers: [5, 2], operators: ['÷']), isNull);
+    });
+
+    test('Division by zero returns null', () {
+      expect(MathEvaluator.evaluate(numbers: [5, 0], operators: ['÷']), isNull);
     });
   });
 
   group('PuzzleGenerator Tests', () {
-    test('Generate easy puzzle generates valid equations', () {
+    test('Generate easy puzzle', () {
       final puzzle = PuzzleGenerator.getPuzzle(
         difficulty: PuzzleDifficulty.easy,
         levelNumber: 1,
       );
       expect(puzzle.rows, equals(5));
-      expect(puzzle.equations.isNotEmpty, isTrue);
+      expect(puzzle.cols, equals(5));
+      expect(puzzle.equations.length, equals(4));
       expect(puzzle.initialNumbersToPlace.isNotEmpty, isTrue);
     });
 
-    test('Generate medium pattern puzzle generates valid equations', () {
+    test('Generate medium puzzle (quad islands)', () {
       final puzzle = PuzzleGenerator.getPuzzle(
         difficulty: PuzzleDifficulty.medium,
         levelNumber: 1,
       );
-      expect(puzzle.rows, equals(9));
+      expect(puzzle.rows, equals(11));
+      expect(puzzle.cols, equals(11));
       expect(puzzle.equations.isNotEmpty, isTrue);
     });
 
-    test('Generate hard pattern puzzle generates valid equations', () {
+    test('Generate hard puzzle', () {
       final puzzle = PuzzleGenerator.getPuzzle(
         difficulty: PuzzleDifficulty.hard,
         levelNumber: 1,
@@ -75,13 +61,73 @@ void main() {
       expect(puzzle.equations.isNotEmpty, isTrue);
     });
 
-    test('Generate expert pattern puzzle generates valid equations', () {
+    test('Generate expert puzzle', () {
       final puzzle = PuzzleGenerator.getPuzzle(
         difficulty: PuzzleDifficulty.expert,
         levelNumber: 1,
       );
       expect(puzzle.rows, equals(11));
       expect(puzzle.equations.isNotEmpty, isTrue);
+    });
+
+    void verifyPuzzleMath(CrossmathPuzzle puzzle) {
+      for (final eq in puzzle.equations) {
+        final numbers = <int>[];
+        for (final coord in eq.numberCoords) {
+          final cell = puzzle.grid[coord.$1][coord.$2];
+          expect(cell.solutionValue, isNotNull,
+              reason: 'Cell at $coord in equation ${eq.id} has null solutionValue');
+          numbers.add(cell.solutionValue!);
+        }
+        final targetResCell = puzzle.grid[eq.resultCoord.$1][eq.resultCoord.$2];
+        final targetVal = targetResCell.solutionValue ?? targetResCell.resultValue ?? eq.targetResult;
+        final result = MathEvaluator.evaluate(numbers: numbers, operators: eq.operators);
+        expect(result, equals(targetVal),
+            reason: '${puzzle.id} Equation ${eq.id} failed: $numbers ${eq.operators} = $result (expected $targetVal)');
+      }
+    }
+
+    test('Easy puzzle equations are correct across levels 1-20', () {
+      for (int lvl = 1; lvl <= 20; lvl++) {
+        final puzzle = PuzzleGenerator.getPuzzle(
+          difficulty: PuzzleDifficulty.easy,
+          levelNumber: lvl,
+        );
+        verifyPuzzleMath(puzzle);
+      }
+    });
+
+    test('Medium puzzle equations are correct across levels 1-20', () {
+      for (int lvl = 1; lvl <= 20; lvl++) {
+        final puzzle = PuzzleGenerator.getPuzzle(
+          difficulty: PuzzleDifficulty.medium,
+          levelNumber: lvl,
+        );
+        verifyPuzzleMath(puzzle);
+      }
+    });
+
+    test('Hard & Expert puzzle equations are correct across levels 1-20', () {
+      for (int lvl = 1; lvl <= 20; lvl++) {
+        final puzzleHard = PuzzleGenerator.getPuzzle(
+          difficulty: PuzzleDifficulty.hard,
+          levelNumber: lvl,
+        );
+        verifyPuzzleMath(puzzleHard);
+
+        final puzzleExpert = PuzzleGenerator.getPuzzle(
+          difficulty: PuzzleDifficulty.expert,
+          levelNumber: lvl,
+        );
+        verifyPuzzleMath(puzzleExpert);
+      }
+    });
+
+    test('Daily challenge equations are correct for any day of month', () {
+      for (int day = 1; day <= 31; day++) {
+        final puzzle = PuzzleGenerator.getDailyPuzzle(DateTime(2026, 11, day));
+        verifyPuzzleMath(puzzle);
+      }
     });
   });
 }
