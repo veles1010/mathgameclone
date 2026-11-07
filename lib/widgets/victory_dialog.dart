@@ -1,6 +1,7 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import '../controllers/game_controller.dart';
+import '../services/audio_service.dart';
 
 class VictoryDialog extends StatefulWidget {
   final GameController controller;
@@ -27,6 +28,7 @@ class _VictoryDialogState extends State<VictoryDialog> {
     super.initState();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _confettiController.play();
+    AudioService().playConfetti();
   }
 
   @override

@@ -75,6 +75,29 @@ class SettingsDialog extends StatelessWidget {
           ),
           const Divider(),
 
+          // Sound Effects Toggle
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            activeThumbColor: theme.accentColor,
+            title: Text(
+              'Ses Efektleri',
+              style: theme.font(
+                color: theme.primaryTextColor,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Text(
+              'Doğru/yanlış işlem uyarıları ve konfeti patlama sesi',
+              style: theme.font(color: theme.secondaryTextColor, fontSize: 12),
+            ),
+            value: controller.isSoundEnabled,
+            onChanged: (val) {
+              controller.toggleSound();
+            },
+          ),
+          const Divider(),
+
           // Themes shortcut
           ListTile(
             contentPadding: EdgeInsets.zero,

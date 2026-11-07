@@ -175,6 +175,17 @@ class GameHeader extends StatelessWidget {
 
                     const SizedBox(width: 4),
 
+                    // Sound Toggle
+                    IconButton(
+                      icon: Icon(
+                        controller.isSoundEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                        color: controller.isSoundEnabled ? theme.primaryTextColor : theme.secondaryTextColor.withValues(alpha: 0.5),
+                      ),
+                      tooltip: controller.isSoundEnabled ? 'Sesi Kapat' : 'Sesi Aç',
+                      onPressed: () => controller.toggleSound(),
+                      visualDensity: VisualDensity.compact,
+                    ),
+
                     // Settings
                     IconButton(
                       icon: Icon(Icons.settings_outlined, color: theme.primaryTextColor),

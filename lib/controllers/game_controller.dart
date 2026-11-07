@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cell_model.dart';
 import '../models/crossmath_puzzle.dart';
+import '../services/audio_service.dart';
 import '../services/puzzle_generator.dart';
 import '../theme/game_theme.dart';
 
@@ -44,6 +45,9 @@ class GameController extends ChangeNotifier {
   static const int maxMistakes = 3;
   bool _relaxedMode = false; // no mistake limit
 
+  // Audio service
+  final AudioService _audioService = AudioService();
+
   // Timer
   Timer? _timer;
   int _secondsElapsed = 0;
@@ -73,6 +77,7 @@ class GameController extends ChangeNotifier {
   bool get isGameOver => _isGameOver;
   int get mistakes => _mistakes;
   bool get relaxedMode => _relaxedMode;
+  bool get isSoundEnabled => _audioService.isSoundEnabled;
   int get secondsElapsed => _secondsElapsed;
   bool get isPaused => _isPaused;
   int get hintsRemaining => _hintsRemaining;
@@ -136,6 +141,8 @@ class GameController extends ChangeNotifier {
     }
 
     _relaxedMode = _prefs.getBool('relaxed_mode') ?? false;
+    _audioService.isSoundEnabled = _prefs.getBool('sound_enabled') ?? true;
+    await _audioService.init();
     _hintsRemaining = _prefs.getInt('hints_count') ?? 3;
     _currentLevel = _prefs.getInt('level_${_difficulty.name}') ?? 1;
 
@@ -153,6 +160,12 @@ class GameController extends ChangeNotifier {
   void toggleRelaxedMode() {
     _relaxedMode = !_relaxedMode;
     _prefs.setBool('relaxed_mode', _relaxedMode);
+    notifyListeners();
+  }
+
+  void toggleSound() {
+    _audioService.isSoundEnabled = !_audioService.isSoundEnabled;
+    _prefs.setBool('sound_enabled', _audioService.isSoundEnabled);
     notifyListeners();
   }
 
@@ -444,12 +457,16 @@ class GameController extends ChangeNotifier {
   }
 
   void _validateAffectedEquations(CellModel cell) {
+    bool hasCompletedWrong = false;
+    bool hasCompletedCorrect = false;
+
     for (final eqId in cell.equationIds) {
       final eq = _puzzle.equations.firstWhere((e) => e.id == eqId);
       final allCoords = [...eq.numberCoords, eq.resultCoord];
       if (eq.isComplete(_puzzle.grid)) {
         if (!eq.isSatisfied(_puzzle.grid)) {
           // Equation is filled completely but evaluates wrong!
+          hasCompletedWrong = true;
           cell.isError = true;
           if (!_relaxedMode) {
             _mistakes++;
@@ -459,6 +476,7 @@ class GameController extends ChangeNotifier {
             }
           }
         } else {
+          hasCompletedCorrect = true;
           for (final coord in allCoords) {
             _checkAndClearCellError(coord.$1, coord.$2);
           }
@@ -468,6 +486,25 @@ class GameController extends ChangeNotifier {
           _checkAndClearCellError(coord.$1, coord.$2);
         }
       }
+    }
+
+    // Play appropriate sound feedback
+    if (hasCompletedWrong) {
+      _audioService.playError();
+    } else if (hasCompletedCorrect) {
+      // Check if this was the last equation that completed the entire puzzle
+      bool allSatisfied = true;
+      for (final eq in _puzzle.equations) {
+        if (!eq.isSatisfied(_puzzle.grid)) {
+          allSatisfied = false;
+          break;
+        }
+      }
+      if (!allSatisfied) {
+        _audioService.playCorrect();
+      }
+    } else {
+      _audioService.playTap();
     }
   }
 

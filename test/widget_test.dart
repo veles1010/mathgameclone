@@ -1,10 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:crossmath_puzzle/services/audio_service.dart';
 import 'package:crossmath_puzzle/services/math_evaluator.dart';
 import 'package:crossmath_puzzle/models/crossmath_puzzle.dart';
 import 'package:crossmath_puzzle/services/puzzle_generator.dart';
 import 'package:crossmath_puzzle/theme/game_theme.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('AudioService Tests', () {
+    test('AudioService can be toggled', () {
+      final audio = AudioService();
+      audio.isSoundEnabled = true;
+      expect(audio.isSoundEnabled, isTrue);
+      audio.isSoundEnabled = false;
+      expect(audio.isSoundEnabled, isFalse);
+      audio.isSoundEnabled = true;
+    });
+
+    test('AudioService play methods respect isSoundEnabled', () async {
+      final audio = AudioService();
+      audio.isSoundEnabled = false;
+      await audio.playCorrect();
+      await audio.playError();
+      await audio.playConfetti();
+      await audio.playTap();
+      audio.isSoundEnabled = true;
+    });
+  });
+
   group('Theme Tests', () {
     test('All themes can be instantiated without errors', () {
       for (final type in ThemeType.values) {
