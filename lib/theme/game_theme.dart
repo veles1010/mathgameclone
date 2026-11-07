@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 enum ThemeType {
   classicCrossmath,
+  classicCrossmathLight,
   cyberpunk,
   nordicWood,
   forestZen,
@@ -13,7 +14,9 @@ enum ThemeType {
   String get displayName {
     switch (this) {
       case ThemeType.classicCrossmath:
-        return 'Klasik Crossmath';
+        return 'Klasik Crossmath (Koyu)';
+      case ThemeType.classicCrossmathLight:
+        return 'Klasik Crossmath (Açık)';
       case ThemeType.cyberpunk:
         return 'Cyberpunk Neon';
       case ThemeType.nordicWood:
@@ -32,7 +35,9 @@ enum ThemeType {
   String get description {
     switch (this) {
       case ThemeType.classicCrossmath:
-        return 'Orijinal sarı karolar ve yeşil sayı havuzu';
+        return 'Koyu zemin, sarı karolar ve yeşil sayı havuzu';
+      case ThemeType.classicCrossmathLight:
+        return 'Açık zemin, beyaz oyun alanı ve sarı karolar';
       case ThemeType.cyberpunk:
         return 'Işıltılı neonlar ve fütüristik siber hatlar';
       case ThemeType.nordicWood:
@@ -51,7 +56,9 @@ enum ThemeType {
   String get previewEmoji {
     switch (this) {
       case ThemeType.classicCrossmath:
-        return '🟡';
+        return '🌙';
+      case ThemeType.classicCrossmathLight:
+        return '☀️';
       case ThemeType.cyberpunk:
         return '⚡';
       case ThemeType.nordicWood:
@@ -213,6 +220,48 @@ class CrossmathThemeData {
           rackTileText: const Color(0xFF047857),
           rackTileBorder: const Color(0xFFA7D7B5),
           rackTileDisabledBg: const Color(0xFF232838),
+          font: GoogleFonts.outfit,
+        );
+
+      case ThemeType.classicCrossmathLight:
+        return CrossmathThemeData(
+          type: type,
+          isDark: false,
+          backgroundColor: const Color(0xFFF1F5F9), // Slate 100
+          backgroundSecondary: const Color(0xFFFFFFFF), // Pure white
+          backgroundGradient: const [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
+          appBarColor: const Color(0xFFF8FAFC),
+          primaryTextColor: const Color(0xFF0F172A), // Slate 900
+          secondaryTextColor: const Color(0xFF64748B), // Slate 500
+          accentColor: const Color(0xFFD97706), // Amber 600
+          accentColorSecondary: const Color(0xFF059669), // Emerald 600
+          boardBackgroundColor: const Color(0xFFFFFFFF), // Distinct white puzzle board
+          boardBorderColor: const Color(0xFFCBD5E1), // Slate 300
+          fixedCellBg: const Color(0xFFFDE68A), // Warm yellow (Amber 200)
+          fixedCellText: const Color(0xFF1E293B), // Slate 800
+          fixedCellBorder: const Color(0xFFF59E0B), // Amber 500
+          editableEmptyCellBg: const Color(0xFFFFFBEB), // Soft warm cream (Amber 50)
+          editableEmptyCellBorder: const Color(0xFFFCD34D), // Amber 300
+          editableFilledCellBg: const Color(0xFFFFFFFF),
+          editableFilledCellText: const Color(0xFF047857), // Emerald 700
+          editableFilledCellBorder: const Color(0xFF10B981), // Emerald 500
+          selectedCellBg: const Color(0xFFFEF3C7), // Amber 100
+          selectedCellBorder: const Color(0xFFD97706), // Amber 600
+          highlightedCellBg: const Color(0x29F59E0B),
+          operatorCellBg: const Color(0xFFFDE68A),
+          operatorCellText: const Color(0xFF1E293B),
+          equalCellBg: const Color(0xFFFDE68A),
+          equalCellText: const Color(0xFF1E293B),
+          resultCellBg: const Color(0xFFFDE68A),
+          resultCellText: const Color(0xFF1E293B),
+          resultCellBorder: const Color(0xFFF59E0B),
+          satisfiedGlowColor: const Color(0xFF10B981),
+          errorColor: const Color(0xFFEF4444),
+          rackBg: const Color(0xFFF8FAFC),
+          rackTileBg: const Color(0xFFE6F4EA), // Soft mint green
+          rackTileText: const Color(0xFF047857), // Bold dark green
+          rackTileBorder: const Color(0xFFA7D7B5),
+          rackTileDisabledBg: const Color(0xFFE2E8F0),
           font: GoogleFonts.outfit,
         );
 

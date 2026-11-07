@@ -33,7 +33,7 @@ class ThemeSelectorDialog extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
+            color: Colors.black.withValues(alpha: activeTheme.isDark ? 0.5 : 0.15),
             blurRadius: 24,
             offset: const Offset(0, -6),
           ),
@@ -186,8 +186,8 @@ class ThemeSelectorDialog extends StatelessWidget {
                                         ),
                                         child: Text(
                                           'AKTİF',
-                                          style: const TextStyle(
-                                            color: Colors.black,
+                                          style: TextStyle(
+                                            color: themeData.isDark ? Colors.black : Colors.white,
                                             fontSize: 9,
                                             fontWeight: FontWeight.bold,
                                           ),

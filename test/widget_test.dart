@@ -2,8 +2,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:crossmath_puzzle/services/math_evaluator.dart';
 import 'package:crossmath_puzzle/models/crossmath_puzzle.dart';
 import 'package:crossmath_puzzle/services/puzzle_generator.dart';
+import 'package:crossmath_puzzle/theme/game_theme.dart';
 
 void main() {
+  group('Theme Tests', () {
+    test('All themes can be instantiated without errors', () {
+      for (final type in ThemeType.values) {
+        final theme = CrossmathThemeData.getTheme(type);
+        expect(type.displayName.isNotEmpty, isTrue);
+        expect(type.description.isNotEmpty, isTrue);
+        expect(type.previewEmoji.isNotEmpty, isTrue);
+        expect(theme.backgroundColor, isNotNull);
+        expect(theme.boardBackgroundColor, isNotNull);
+        expect(theme.fixedCellBg, isNotNull);
+        expect(theme.editableEmptyCellBg, isNotNull);
+      }
+    });
+
+    test('Classic Crossmath Light has distinct board and background colors', () {
+      final lightTheme = CrossmathThemeData.getTheme(ThemeType.classicCrossmathLight);
+      expect(lightTheme.isDark, isFalse);
+      expect(lightTheme.boardBackgroundColor, isNot(equals(lightTheme.backgroundColor)));
+    });
+  });
+
   group('MathEvaluator Tests', () {
     test('Simple addition', () {
       expect(MathEvaluator.evaluate(numbers: [3, 5], operators: ['+']), 8);
